@@ -38,8 +38,11 @@ public class BPUsageExplorer : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				
+ 				"InputCore",
 				"Kismet",
-				"UnrealEd"
+				"UnrealEd",
+				"BlueprintGraph",
 			}
 			);
 		

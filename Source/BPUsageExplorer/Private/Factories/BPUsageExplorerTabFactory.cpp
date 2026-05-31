@@ -1,6 +1,7 @@
 ﻿
 #include "BPUsageExplorerTabFactory.h"
 #include "BPUsageExplorer.h"
+#include "Widgets/SBPUsageExplorer.h"
 
 FBPUsageExplorerTabFactory::FBPUsageExplorerTabFactory(FName InTabName, TSharedPtr<FBlueprintEditor> InEditor)
 	: FWorkflowTabFactory(InTabName, InEditor)
@@ -15,14 +16,19 @@ FBPUsageExplorerTabFactory::FBPUsageExplorerTabFactory(FName InTabName, TSharedP
 
 TSharedRef<SWidget> FBPUsageExplorerTabFactory::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
 {
+	TObjectPtr<UBlueprint> Blueprint = nullptr;
+	if (BlueprintEditor.IsValid())
+	{
+		Blueprint = Cast<UBlueprint>(BlueprintEditor.Pin()->GetBlueprintObj());
+	}
+	
     return SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(10.f)
-        [
-            SNew(STextBlock)
-            .Text(FText::FromString("Test Text"))
-        ];
+    	+ SVerticalBox::Slot()
+    	.AutoHeight()
+    	[
+    		SNew(SBPUsageExplorer)
+    		.Blueprint(Blueprint)
+    	];
 }
 
 FText FBPUsageExplorerTabFactory::GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const
