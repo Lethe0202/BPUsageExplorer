@@ -4,3 +4,4 @@
 #include "K2Node_Event.h"
 #include "Engine/SCS_Node.h"
 #include "Engine/SimpleConstructionScript.h"
+#include "Common/BPUsageTypes.h"

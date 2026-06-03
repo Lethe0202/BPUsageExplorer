@@ -1,6 +1,7 @@
 ﻿#pragma once
+#include "Details/Entry/BPUsageEntry.h"
 
-
+class SBPUsageDetails;
 
 class SBPUsageExplorer : public SCompoundWidget
 {
@@ -12,4 +13,10 @@ public:
 	SLATE_END_ARGS()
 	
 	void Construct(const FArguments& InArgs);
+
+protected:
+	void HandleEntrySelected(TSharedPtr<FBPUsageEntry> Entry);
+
+private:
+	TSharedPtr<SBPUsageDetails> BPUsageDetailsPanel;
 };

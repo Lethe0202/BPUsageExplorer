@@ -1,6 +1,5 @@
 ﻿#include "SBPUsageTree.h"
 #include "BPUsageExplorerItemPCH.h"
-
 #include "Widgets/Input/SSearchBox.h"
 
 #define LOCTEXT_NAMESPACE "SBPUsageTree"
@@ -8,6 +7,8 @@
 void SBPUsageTree::Construct(const FArguments& InArgs)
 {
 	Blueprint = MakeWeakObjectPtr(InArgs._Blueprint);
+
+	OnEntrySelected = InArgs._OnEntrySelected;
 	
 	ChildSlot
 	[
@@ -79,9 +80,9 @@ void SBPUsageTree::HandleTreeViewGetChildren(TSharedPtr<FBPUsageEntry> Entry, TA
 
 void SBPUsageTree::HandleTreeViewSelectionChanged(TSharedPtr<FBPUsageEntry> Entry, ESelectInfo::Type SelectInfo)
 {
-	if (!Entry.IsValid() || Entry->GetEntryType() == EBPUsageEntryType::Category)
+	if (Entry.IsValid())
 	{
-		return;
+		OnEntrySelected.ExecuteIfBound(Entry);
 	}
 }
 
@@ -92,25 +93,25 @@ void SBPUsageTree::RefreshTree()
     if (!Blueprint.IsValid()) return;
 	
     // 카테고리 생성
-    TSharedPtr<FBPUsageCategoryEntry> VariablesCategory = MakeShared<FBPUsageCategoryEntry>(FName("Variables"));
-    TSharedPtr<FBPUsageCategoryEntry> FunctionsCategory = MakeShared<FBPUsageCategoryEntry>(FName("Functions"));
-    TSharedPtr<FBPUsageCategoryEntry> EventsCategory = MakeShared<FBPUsageCategoryEntry>(FName("Events"));
-    TSharedPtr<FBPUsageCategoryEntry> DispatchersCategory = MakeShared<FBPUsageCategoryEntry>(FName("Dispatchers"));
-    TSharedPtr<FBPUsageCategoryEntry> MacrosCategory = MakeShared<FBPUsageCategoryEntry>(FName("Macros"));
-    TSharedPtr<FBPUsageCategoryEntry> ComponentsCategory = MakeShared<FBPUsageCategoryEntry>(FName("Components"));
+    TSharedPtr<FBPUsageCategoryEntry> VariablesCategory = MakeShared<FBPUsageCategoryEntry>(BPUsageCategoryNames::Variables);
+    TSharedPtr<FBPUsageCategoryEntry> FunctionsCategory = MakeShared<FBPUsageCategoryEntry>(BPUsageCategoryNames::Functions);
+    TSharedPtr<FBPUsageCategoryEntry> EventsCategory = MakeShared<FBPUsageCategoryEntry>(BPUsageCategoryNames::Events);
+    TSharedPtr<FBPUsageCategoryEntry> DispatchersCategory = MakeShared<FBPUsageCategoryEntry>(BPUsageCategoryNames::Dispatchers);
+    TSharedPtr<FBPUsageCategoryEntry> MacrosCategory = MakeShared<FBPUsageCategoryEntry>(BPUsageCategoryNames::Macros);
+    TSharedPtr<FBPUsageCategoryEntry> ComponentsCategory = MakeShared<FBPUsageCategoryEntry>(BPUsageCategoryNames::Components);
 	
     // 변수 수집
     for (FBPVariableDescription& Variable : Blueprint->NewVariables)
     {
         VariablesCategory->AddChild(
-            MakeShared<FBPUsageItemEntry>(Variable.VarName, FName("Variables")));
+            MakeShared<FBPUsageItemEntry>(Variable.VarName, BPUsageCategoryNames::Variables));
     }
 	
     // 함수 수집
     for (UEdGraph* FunctionGraph : Blueprint->FunctionGraphs)
     {
         FunctionsCategory->AddChild(
-            MakeShared<FBPUsageItemEntry>(FunctionGraph->GetFName(), FName("Functions")));
+            MakeShared<FBPUsageItemEntry>(FunctionGraph->GetFName(), BPUsageCategoryNames::Functions));
     }
 	
     // 이벤트 수집
@@ -127,23 +128,23 @@ void SBPUsageTree::RefreshTree()
             if (UK2Node_Event* EventNode = Cast<UK2Node_Event>(Node))
             {
                 EventsCategory->AddChild(
-                    MakeShared<FBPUsageItemEntry>(EventNode->GetFunctionName(), FName("Events")));
+                    MakeShared<FBPUsageItemEntry>(EventNode->GetFunctionName(), BPUsageCategoryNames::Events));
             }
             else if (UK2Node_CustomEvent* CustomEventNode = Cast<UK2Node_CustomEvent>(Node))
             {
                 EventsCategory->AddChild(
-                    MakeShared<FBPUsageItemEntry>(CustomEventNode->CustomFunctionName, FName("Events")));
+                    MakeShared<FBPUsageItemEntry>(CustomEventNode->CustomFunctionName, BPUsageCategoryNames::Events));
             }
         }
     }
-
+	
     // 디스패처 수집
     for (FBPVariableDescription& Dispatcher : Blueprint->NewVariables)
     {
         if (Dispatcher.VarType.PinCategory == UEdGraphSchema_K2::PC_MCDelegate)
         {
             DispatchersCategory->AddChild(
-                MakeShared<FBPUsageItemEntry>(Dispatcher.VarName, FName("Dispatchers")));
+                MakeShared<FBPUsageItemEntry>(Dispatcher.VarName, BPUsageCategoryNames::Dispatchers));
         }
     }
 
@@ -151,7 +152,7 @@ void SBPUsageTree::RefreshTree()
     for (UEdGraph* MacroGraph : Blueprint->MacroGraphs)
     {
         MacrosCategory->AddChild(
-            MakeShared<FBPUsageItemEntry>(MacroGraph->GetFName(), FName("Macros")));
+            MakeShared<FBPUsageItemEntry>(MacroGraph->GetFName(), BPUsageCategoryNames::Macros));
     }
 
     // 컴포넌트 수집
@@ -160,7 +161,7 @@ void SBPUsageTree::RefreshTree()
         for (USCS_Node* SCSNode : SCS->GetAllNodes())
         {
             ComponentsCategory->AddChild(
-                MakeShared<FBPUsageItemEntry>(SCSNode->GetVariableName(), FName("Components")));
+                MakeShared<FBPUsageItemEntry>(SCSNode->GetVariableName(), BPUsageCategoryNames::Components));
         }
     }
 
@@ -182,7 +183,7 @@ void SBPUsageTree::RefreshTree()
 
     if (BPUsageTreeView.IsValid())
     {
-        BPUsageTreeView->RequestTreeRefresh();
+	    BPUsageTreeView->RequestTreeRefresh();
     }
 }
 
